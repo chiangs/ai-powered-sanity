@@ -1,65 +1,202 @@
 import {defineField, defineType} from 'sanity'
+import {DocumentTextIcon} from '@sanity/icons'
 
-export default defineType({
+export const postType = defineType({
   name: 'post',
   title: 'Post',
   type: 'document',
+  icon: DocumentTextIcon,
+  groups: [
+    {
+      name: 'content',
+      title: 'Content',
+      default: true,
+    },
+    {
+      name: 'meta',
+      title: 'Metadata',
+    },
+    {
+      name: 'seo',
+      title: 'SEO',
+    },
+  ],
   fields: [
     defineField({
       name: 'title',
-      title: 'Title',
       type: 'string',
+      group: 'content',
+      validation: (Rule) =>
+        Rule.required()
+          .min(10)
+          .max(80)
+          .error('Title is required and should be between 10-80 characters'),
     }),
     defineField({
       name: 'slug',
-      title: 'Slug',
       type: 'slug',
+      group: 'content',
       options: {
         source: 'title',
         maxLength: 96,
       },
+      validation: (Rule) => Rule.required().error('Slug is required for URL generation'),
     }),
     defineField({
-      name: 'author',
-      title: 'Author',
+      name: 'status',
+      type: 'string',
+      group: 'content',
+      options: {
+        list: [
+          {title: 'Draft', value: 'draft'},
+          {title: 'Published', value: 'published'},
+          {title: 'Archived', value: 'archived'},
+        ],
+        layout: 'radio',
+      },
+      initialValue: 'draft',
+      validation: (Rule) => Rule.required().error('Status is required for content management'),
+    }),
+    defineField({
+      name: 'person',
       type: 'reference',
-      to: {type: 'author'},
+      group: 'content',
+      to: [{type: 'person'}],
+      validation: (Rule) => Rule.required().error('Author selection is required'),
+    }),
+    defineField({
+      name: 'excerpt',
+      type: 'text',
+      group: 'content',
+      description: 'Brief summary of the post content',
+      validation: (Rule) =>
+        Rule.max(200).warning('Excerpt should be under 200 characters for better readability'),
     }),
     defineField({
       name: 'mainImage',
-      title: 'Main image',
       type: 'image',
+      group: 'content',
       options: {
         hotspot: true,
       },
-    }),
-    defineField({
-      name: 'categories',
-      title: 'Categories',
-      type: 'array',
-      of: [{type: 'reference', to: {type: 'category'}}],
-    }),
-    defineField({
-      name: 'publishedAt',
-      title: 'Published at',
-      type: 'datetime',
+      fields: [
+        defineField({
+          name: 'alt',
+          type: 'string',
+          description: 'Alternative text for accessibility',
+          validation: (Rule) => Rule.required().error('Alt text is required for accessibility'),
+        }),
+        defineField({
+          name: 'caption',
+          type: 'string',
+          description: 'Optional caption for the image',
+        }),
+      ],
     }),
     defineField({
       name: 'body',
-      title: 'Body',
       type: 'blockContent',
+      group: 'content',
+      validation: (Rule) => Rule.required().error('Body content is required'),
+    }),
+    defineField({
+      name: 'categories',
+      type: 'array',
+      group: 'meta',
+      of: [{type: 'reference', to: {type: 'category'}}],
+      validation: (Rule) =>
+        Rule.min(1).max(3).error('Please select 1-3 categories for proper organization'),
+    }),
+    defineField({
+      name: 'tags',
+      type: 'array',
+      group: 'meta',
+      of: [{type: 'string'}],
+      options: {
+        layout: 'tags',
+      },
+      validation: (Rule) =>
+        Rule.max(10).warning('Consider limiting tags to 10 or fewer for better organization'),
+    }),
+    defineField({
+      name: 'publishedAt',
+      type: 'datetime',
+      group: 'meta',
+      validation: (Rule) => Rule.required().error('Published date is required'),
+    }),
+    defineField({
+      name: 'featured',
+      type: 'string',
+      group: 'meta',
+      options: {
+        list: [
+          {title: 'Not Featured', value: 'not-featured'},
+          {title: 'Featured', value: 'featured'},
+          {title: 'Hero Post', value: 'hero'},
+        ],
+        layout: 'radio',
+      },
+      initialValue: 'not-featured',
+      description: 'Feature level for homepage display',
+    }),
+    defineField({
+      name: 'metaTitle',
+      type: 'string',
+      group: 'seo',
+      description: 'Override the title for SEO purposes',
+      validation: (Rule) =>
+        Rule.max(60).warning('Meta title should be under 60 characters for optimal SEO'),
+    }),
+    defineField({
+      name: 'metaDescription',
+      type: 'text',
+      group: 'seo',
+      description: 'Brief description for search engines',
+      validation: (Rule) =>
+        Rule.max(160).warning('Meta description should be under 160 characters for optimal SEO'),
     }),
   ],
-
+  orderings: [
+    {
+      title: 'Published Date, New',
+      name: 'publishedAtDesc',
+      by: [{field: 'publishedAt', direction: 'desc'}],
+    },
+    {
+      title: 'Published Date, Old',
+      name: 'publishedAtAsc',
+      by: [{field: 'publishedAt', direction: 'asc'}],
+    },
+    {
+      title: 'Title A-Z',
+      name: 'titleAsc',
+      by: [{field: 'title', direction: 'asc'}],
+    },
+  ],
   preview: {
     select: {
       title: 'title',
-      author: 'author.name',
+      author: 'person.name',
       media: 'mainImage',
+      status: 'status',
+      publishedAt: 'publishedAt',
     },
     prepare(selection) {
-      const {author} = selection
-      return {...selection, subtitle: author && `by ${author}`}
+      const {title, author, media, status, publishedAt} = selection
+      const statusEmoji: Record<string, string> = {
+        draft: '📝',
+        published: '✅',
+        archived: '📦',
+      }
+      const date = publishedAt ? new Date(publishedAt).toLocaleDateString() : 'No date'
+
+      return {
+        title,
+        subtitle: author
+          ? `${statusEmoji[status] || ''} by ${author} • ${date}`
+          : `${statusEmoji[status] || ''} ${date}`,
+        media: media || DocumentTextIcon,
+      }
     },
   },
 })
