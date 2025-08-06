@@ -1,37 +1,47 @@
 {
-  "name": "my-custom-keeb-shop",
-  "private": true,
+  "name": "ai-powered-sanity",
   "version": "1.0.0",
-  "main": "package.json",
-  "license": "UNLICENSED",
+  "description": "A modern content management system built with Sanity Studio and designed for future frontend integration",
+  "private": true,
+  "workspaces": [
+    "studio",
+    "web"
+  ],
   "scripts": {
-    "dev": "sanity dev",
-    "start": "sanity start",
-    "build": "sanity build",
-    "deploy": "sanity deploy",
-    "deploy-graphql": "sanity graphql deploy"
+    "studio:dev": "npm run dev --workspace=studio",
+    "studio:build": "npm run build --workspace=studio",
+    "studio:deploy": "npm run deploy --workspace=studio",
+    "web:dev": "npm run dev --workspace=web",
+    "web:build": "npm run build --workspace=web",
+    "web:start": "npm run start --workspace=web",
+    "install:all": "npm install && npm install --workspace=studio",
+    "clean": "rm -rf node_modules && rm -rf studio/node_modules && rm -rf web/node_modules",
+    "lint": "npm run lint --workspaces --if-present",
+    "type-check": "npm run type-check --workspaces --if-present"
   },
   "keywords": [
-    "sanity"
+    "sanity",
+    "cms",
+    "content-management",
+    "typescript",
+    "monorepo"
   ],
-  "dependencies": {
-    "@sanity/vision": "^4.3.0",
-    "react": "^19.1",
-    "react-dom": "^19.1",
-    "sanity": "^4.3.0",
-    "styled-components": "^6.1.18"
+  "author": "Stephen Chiang <stephen@chiang.ink>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chiangs/ai-powered-sanity.git"
+  },
+  "bugs": {
+    "url": "https://github.com/chiangs/ai-powered-sanity/issues"
+  },
+  "homepage": "https://github.com/chiangs/ai-powered-sanity#readme",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
   },
   "devDependencies": {
-    "@sanity/eslint-config-studio": "^5.0.2",
-    "@types/react": "^19.1",
-    "eslint": "^9.28",
-    "prettier": "^3.5",
-    "typescript": "^5.8"
-  },
-  "prettier": {
-    "semi": false,
-    "printWidth": 100,
-    "bracketSpacing": false,
-    "singleQuote": true
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
   }
 }
