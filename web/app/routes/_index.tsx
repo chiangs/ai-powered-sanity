@@ -1,53 +1,96 @@
-import type { MetaFunction } from "@remix-run/node";
+import type { MetaFunction, LoaderFunctionArgs } from "@remix-run/node";
+import { json } from "@remix-run/node";
+import { useLoaderData } from "@remix-run/react";
+import { client } from "~/sanity/client";
+import { LATEST_POSTS_QUERY } from "~/sanity/queries";
+import type { BlogPost } from "~/sanity/types";
 
 export const meta: MetaFunction = () => {
   return [
-    { title: "New Remix App" },
-    { name: "description", content: "Welcome to Remix!" },
+    { title: "My Custom Keeb Shop" },
+    { name: "description", content: "Latest blog posts and updates" },
   ];
 };
 
+export async function loader({}: LoaderFunctionArgs) {
+  try {
+    const posts: BlogPost[] = await client.fetch(LATEST_POSTS_QUERY);
+    return json({ posts });
+  } catch (error) {
+    console.error("Failed to fetch posts:", error);
+    return json({ posts: [] });
+  }
+}
+
 export default function Index() {
+  const { posts } = useLoaderData<typeof loader>();
+
   return (
-    <div className="flex h-screen items-center justify-center">
-      <div className="flex flex-col items-center gap-16">
-        <header className="flex flex-col items-center gap-9">
-          <h1 className="leading text-2xl font-bold text-gray-800 dark:text-gray-100">
-            Welcome to <span className="sr-only">Remix</span>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+        <header className="text-center mb-12">
+          <h1 className="text-4xl font-bold text-gray-800 dark:text-gray-100 mb-4">
+            My Custom Keeb Shop
           </h1>
-          <div className="h-[144px] w-[434px]">
-            <img
-              src="/logo-light.png"
-              alt="Remix"
-              className="block w-full dark:hidden"
-            />
-            <img
-              src="/logo-dark.png"
-              alt="Remix"
-              className="hidden w-full dark:block"
-            />
-          </div>
-        </header>
-        <nav className="flex flex-col items-center justify-center gap-4 rounded-3xl border border-gray-200 p-6 dark:border-gray-700">
-          <p className="leading-6 text-gray-700 dark:text-gray-200">
-            What&apos;s next?
+          <p className="text-xl text-gray-600 dark:text-gray-300">
+            Latest blog posts and updates
           </p>
-          <ul>
-            {resources.map(({ href, text, icon }) => (
-              <li key={href}>
-                <a
-                  className="group flex items-center gap-3 self-stretch p-3 leading-normal text-blue-700 hover:underline dark:text-blue-500"
-                  href={href}
-                  target="_blank"
-                  rel="noreferrer"
+        </header>
+
+        <section>
+          <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-8">
+            Latest Posts
+          </h2>
+
+          {posts.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-600 dark:text-gray-400">
+                No blog posts found. Create some content in Sanity Studio!
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {posts.map((post) => (
+                <article
+                  key={post._id}
+                  className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
                 >
-                  {icon}
-                  {text}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </nav>
+                  <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-2">
+                    {post.title}
+                  </h3>
+
+                  {post.excerpt && (
+                    <p className="text-gray-600 dark:text-gray-300 mb-4">
+                      {post.excerpt}
+                    </p>
+                  )}
+
+                  <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
+                    <div className="flex items-center space-x-4">
+                      <span>By {post.person.name}</span>
+                      <span>
+                        {new Date(post.publishedAt).toLocaleDateString()}
+                      </span>
+                    </div>
+
+                    {post.categories.length > 0 && (
+                      <div className="flex space-x-2">
+                        {post.categories.map((category) => (
+                          <span
+                            key={category._id}
+                            className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-full text-xs"
+                          >
+                            {category.title}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
       </div>
     </div>
   );
