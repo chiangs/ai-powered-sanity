@@ -5,6 +5,7 @@ export const postType = defineType({
   name: 'post',
   title: 'Post',
   type: 'document',
+  description: 'Blog posts and articles with rich content, metadata, and SEO optimization',
   icon: DocumentTextIcon,
   groups: [
     {
@@ -19,6 +20,17 @@ export const postType = defineType({
     {
       name: 'seo',
       title: 'SEO',
+    },
+  ],
+  fieldsets: [
+    {
+      name: 'dates',
+      title: 'Publication Dates',
+      options: {
+        collapsible: true,
+        collapsed: false,
+        columns: 2,
+      },
     },
   ],
   fields: [
@@ -70,7 +82,12 @@ export const postType = defineType({
       group: 'content',
       description: 'Brief summary of the post content',
       validation: (Rule) =>
-        Rule.max(200).warning('Excerpt should be under 200 characters for better readability'),
+        Rule.required()
+          .min(100)
+          .max(300)
+          .error(
+            'Excerpt is required and should be between 100-300 characters for adequate editorial quality',
+          ),
     }),
     defineField({
       name: 'mainImage',
@@ -122,7 +139,15 @@ export const postType = defineType({
       name: 'publishedAt',
       type: 'datetime',
       group: 'meta',
+      fieldset: 'dates',
       validation: (Rule) => Rule.required().error('Published date is required'),
+    }),
+    defineField({
+      name: 'updatedAt',
+      type: 'datetime',
+      group: 'meta',
+      fieldset: 'dates',
+      description: 'Date when the post was last updated',
     }),
     defineField({
       name: 'featured',
@@ -180,21 +205,62 @@ export const postType = defineType({
       media: 'mainImage',
       status: 'status',
       publishedAt: 'publishedAt',
+      categories: 'categories',
+      category0: 'categories.0.title',
+      category0Color: 'categories.0.color',
+      category1: 'categories.1.title',
+      category1Color: 'categories.1.color',
+      category2: 'categories.2.title',
+      category2Color: 'categories.2.color',
     },
     prepare(selection) {
-      const {title, author, media, status, publishedAt} = selection
+      const {
+        title,
+        author,
+        media,
+        status,
+        publishedAt,
+        category0,
+        category0Color,
+        category1,
+        category1Color,
+        category2,
+        category2Color,
+      } = selection
       const statusEmoji: Record<string, string> = {
         draft: '📝',
         published: '✅',
         archived: '📦',
       }
+      const colorEmoji: Record<string, string> = {
+        red: '🔴',
+        blue: '🔵',
+        green: '🟢',
+        purple: '🟣',
+        orange: '🟠',
+      }
+
       const date = publishedAt ? new Date(publishedAt).toLocaleDateString() : 'No date'
+
+      // Build category display with color indicators
+      const categories = []
+      if (category0) {
+        categories.push(`${colorEmoji[category0Color] || '⚪'} ${category0}`)
+      }
+      if (category1) {
+        categories.push(`${colorEmoji[category1Color] || '⚪'} ${category1}`)
+      }
+      if (category2) {
+        categories.push(`${colorEmoji[category2Color] || '⚪'} ${category2}`)
+      }
+
+      const categoryText = categories.length > 0 ? ` • ${categories.join(', ')}` : ''
 
       return {
         title,
         subtitle: author
-          ? `${statusEmoji[status] || ''} by ${author} • ${date}`
-          : `${statusEmoji[status] || ''} ${date}`,
+          ? `${statusEmoji[status] || ''} by ${author} • ${date}${categoryText}`
+          : `${statusEmoji[status] || ''} ${date}${categoryText}`,
         media: media || DocumentTextIcon,
       }
     },

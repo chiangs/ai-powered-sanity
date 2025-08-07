@@ -4,6 +4,7 @@ export const blockContentType = defineType({
   name: 'blockContent',
   title: 'Block Content',
   type: 'array',
+  description: 'Rich text content with support for headings, paragraphs, lists, links, and images',
   of: [
     defineArrayMember({
       type: 'block',

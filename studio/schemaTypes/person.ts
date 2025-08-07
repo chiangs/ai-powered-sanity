@@ -5,6 +5,8 @@ export const personType = defineType({
   name: 'person',
   title: 'Person',
   type: 'document',
+  description:
+    'People associated with content creation, including authors, editors, and contributors',
   icon: UserIcon,
   groups: [
     {

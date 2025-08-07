@@ -5,11 +5,34 @@ export const categoryType = defineType({
   name: 'category',
   title: 'Category',
   type: 'document',
+  description: 'Content categories for organizing and filtering posts and other content',
   icon: TagIcon,
+  groups: [
+    {
+      name: 'content',
+      title: 'Content',
+      default: true,
+    },
+    {
+      name: 'settings',
+      title: 'Settings',
+    },
+  ],
   fields: [
     defineField({
       name: 'title',
       type: 'string',
+      group: 'content',
+      options: {
+        list: [
+          {title: 'Business', value: 'Business'},
+          {title: 'Design', value: 'Design'},
+          {title: 'Hardware', value: 'Hardware'},
+          {title: 'Lifestyle', value: 'Lifestyle'},
+          {title: 'Technology', value: 'Technology'},
+        ],
+        layout: 'dropdown',
+      },
       validation: (Rule) => Rule.required().error('Category title is required for organization'),
     }),
     defineField({
@@ -19,16 +42,27 @@ export const categoryType = defineType({
         source: 'title',
         maxLength: 96,
       },
-      validation: (Rule) => Rule.required().error('Slug is required for URL generation'),
+      hidden: ({document}) => !document?.title,
+      validation: (Rule) =>
+        Rule.required()
+          .error('Slug is required for URL generation')
+          .custom((slug) => {
+            if (!slug || !slug.current) {
+              return 'Slug must be generated from the title'
+            }
+            return true
+          }),
     }),
     defineField({
       name: 'description',
       type: 'text',
+      group: 'content',
       description: 'Brief description of what this category represents',
       validation: (Rule) =>
-        Rule.warning(
-          'Consider adding a description to help content creators understand this category',
-        ),
+        Rule.required()
+          .min(10)
+          .max(100)
+          .error('Description is required and should be between 10-100 characters and be concise'),
     }),
     defineField({
       name: 'color',

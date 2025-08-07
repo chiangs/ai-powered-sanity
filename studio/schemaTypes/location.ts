@@ -5,6 +5,7 @@ export const locationType = defineType({
   name: 'location',
   title: 'Location',
   type: 'document',
+  description: 'Physical locations with address, contact information, and operational details',
   icon: PinIcon,
   groups: [
     {
